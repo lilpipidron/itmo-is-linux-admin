@@ -41,3 +41,15 @@ sudo usermod -a -G g1 myuser
 
 #10
 getent group g1 | cut -d: -f4 >> work3.log
+
+#11
+sudo usermod -s /usr/bin/mc u1
+
+#12
+sudo useradd u2 -p $(openssl passwd -salt xx 87654321)
+
+#13
+sudo mkdir /home/test13
+sudo cp work3.log /home/test13/work3-1.log
+sudo cp work3.log /home/test13/work3-2.log
+
