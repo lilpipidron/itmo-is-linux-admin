@@ -35,3 +35,9 @@ sudo usermod -a -G g1 u1
 
 #8
 id u1 >> work3.log
+
+#9
+sudo usermod -a -G g1 myuser
+
+#10
+getent group g1 | cut -d: -f4 >> work3.log
