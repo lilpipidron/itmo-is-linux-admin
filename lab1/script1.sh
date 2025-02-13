@@ -25,7 +25,7 @@ echo groups >> work3.log
 sudo echo "Be careful!" > /etc/skel/readme.txt
 
 #5
-sudo useradd u1 -p $(openssl passwd -crypt -salt xx 12345678)
+sudo useradd -m -p $(openssl passwd -crypt -salt xx 12345678) u1
 
 #6
 groupadd g1

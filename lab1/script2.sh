@@ -6,4 +6,4 @@ sudo rm /etc/skel/readme.txt
 
 sudo groupdel g1 
 
-sudo serdel u1
+sudo userdel u1
