@@ -69,8 +69,7 @@ chmod 1777 /home/test14
 #16
 cp /bin/nano /home/test14/nano
 chmod a+rx /home/test14/nano
-chmod a+s /home/test13/work3-1.log
-chmod a+s /home/test13/work3-2.log
+chmod u+s /home/test13/*
 
 #17
 mkdir /home/test15
