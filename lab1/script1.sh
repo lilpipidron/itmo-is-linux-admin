@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-> work3.log
-
 #1
 while IFS=: read -r username _ uid _; do 
   echo "user $username has ud $uid" >> work3.log
@@ -71,8 +69,8 @@ chmod 1777 /home/test14
 #16
 cp /bin/nano /home/test14/nano
 chmod a+rx /home/test14/nano
-chmod a+rw /home/test13/work3-1.log
-chmod a+rw /home/test13/work3-2.log
+chmod a+s /home/test13/work3-1.log
+chmod a+s /home/test13/work3-2.log
 
 #17
 mkdir /home/test15
