@@ -1,0 +1,88 @@
+#1
+apt-cache policy
+
+#2
+apt update
+
+#3
+apt show build-essential
+
+#4
+apt install build-essential -V
+
+#5
+apt-cache search "clone with a bastard algorithm"
+
+#6
+mkdir task6
+cd task6
+apt-get source bastet
+
+apt-cache rdepends libgpm2 > task12.log
+#7
+cd bastet-0.43
+apt install libboost-all-dev
+apt install libncurses-dev
+apt install lub
+make
+
+#8
+sudo cp bastet /usr/local/bin/
+sudo chmod 755 /usr/local/bin/bastet
+
+#10
+dpkg -l > task10.log
+
+#11
+apt-cache depends gcc > task11.log
+
+#12
+
+apt-cache rdepends libgpm2 > task12.log
+
+#13
+mkdir /root/localrepo
+wget -P /root/localrepo https://snapshot.debian.org/archive/debian/20240110T210829Z/pool/main/h/htop/htop_3.3.0-1_amd64.deb
+wget -P /root/localrepo https://snapshot.debian.org/archive/debian/20240113T150425Z/pool/main/h/htop/htop_3.3.0-2_amd64.deb
+wget -P /root/localrepo https://snapshot.debian.org/archive/debian/20240118T212557Z/pool/main/h/htop/htop_3.3.0-3_amd64.deb
+wget -P /root/localrepo https://snapshot.debian.org/archive/debian/20240129T091021Z/pool/main/h/htop/htop_3.3.0-4_amd64.deb
+wget -P /root/localrepo https://snapshot.debian.org/archive/debian/20250209T210016Z/pool/main/h/htop/htop_3.3.0-5_amd64.deb
+
+#14
+cd /root/localrepo
+dpkg-scanpackages --multiversion . > Packages
+echo "Origin: My Local Repo
+Label: My Local Repo
+Suite: stable
+Version: 1
+Codename: myrepo
+Architectures: amd64
+Components: main
+Description: My local APT repository" >> Release
+
+#15
+echo "deb [trusted=yes] file:/root/localrepo ./" > /etc/apt/sources.list.d/localrepo.list
+apt update
+
+# 16
+apt-cache policy
+
+# 17
+apt-cache madison htop > task16.log
+
+# 18
+apt install htop=3.2.2-2
+
+#19
+apt-get download nano
+mkdir nano_mod
+dpkg-deb -R nano_*.deb nano_mod
+cd nano_mod
+mkdir usr/bin
+ln -s usr/shared/nano usr/bin/nano_mod
+dpkg-deb -b . ../nano_mod.deb
+dpkg -i ../nano_mod.deb
+
+#20
+apt-get
+В APT есть коровья СУПЕРСИЛА
