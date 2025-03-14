@@ -1,0 +1,153 @@
+#part_1
+
+#1
+systemd-analyze time
+
+#2
+systemd-analyze blame
+
+#3
+systemd-analyze critical-chain sshd.service
+
+#4
+systemd-analyze plot > 1.4.svg
+
+
+#part_2
+
+#1
+systemctl list-units --type=service --state=running
+
+#2
+systemctl list-unit-files --type=service --state=enabled
+
+#3
+systemctl list-dependencies sshd.service
+
+#4
+systemctl status cron
+systemctl start cron
+
+#5
+systemctl show cron
+
+#6
+systemctl disable cron
+
+
+#part_3
+
+#1
+echo '[Unit]
+Description=My Custom Message Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c "logger \"Service mymsg started at $(date)\""
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target' >> /etc/systemd/system/mymsg.service
+
+#2
+systemctl enable mymsg.service
+
+# 3
+systemctl start mymsg.service
+
+
+#part_4
+
+#1
+journalctl
+
+#2
+journalctl -u mymsg.service
+
+# 3
+
+journalctl -p err
+
+# 4
+
+journalctl --disk-usage
+
+
+#part_5
+
+#1
+fdisk /dev/sdb -> n -> p -> 3xenter -> w
+
+mmkfs.ext4 /dev/sdb1
+
+mkdir -p /mnt/mydata
+
+#2
+echo '[Unit]
+Description=Mount mydata partition
+
+[Mount]
+What=/dev/sdb1
+Where=/mnt/mydata
+Type=ext4
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target' >> /etc/systemd/system/mnt-mydata.mount
+
+#3
+systemctl enable mnt-mydata.mount
+systemctl start mnt-mydata.mount
+systemctl status mnt-mydata.mount
+df -h | grep /mnt/mydata
+
+
+#part_5
+
+#1
+systemctl stop mnt-mydata.mount
+umount /mnt/mydata
+
+#2
+echo '[Unit]
+Description=Automount for /mnt/mydata
+
+[Automount]
+Where=/mnt/mydata
+TimeoutIdleSec=30
+
+[Install]
+WantedBy=multi-user.target' >> /etc/systemd/system/mnt-mydata.automount
+
+#3
+systemctl enable mnt-mydata.automount
+systemctl start mnt-mydata.automount
+
+
+
+
+
+#Q
+
+#1
+restart - всегда перезапускает сервис
+try-restart - преезапуск если только уже запущен
+
+#2
+sudo systemctl rescue - запуск
+sudo systemctl default - выйти
+
+#3
+[Unit]
+Description=My Secondary Service
+Conflicts=mymsg.service
+After=mymsg.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c 'logger "Service mysrv started at $(date)"'
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
