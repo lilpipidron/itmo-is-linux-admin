@@ -1,0 +1,191 @@
+#1
+useradd user-72
+systemctl set-property user-72.slice CPUQuota=70%
+
+#2
+apt install cgroup-tools
+cgcreate -g memory:/memory_limit
+cgset -r memory.max=1220M memory_limit
+cgexec -g memory:memory_limit tail /dev/zero
+
+#3
+cgcreate -g io:/backup_limits
+cgset -r io.max="8:0 riops=1560 wiops=1060" backup_limits
+cgexec -g io:backup_limits dd if=/dev/zero of=/tmp/test_file bs=4k count=10000 oflag=direct
+cgexec -g io:backup_limits dd if=/tmp/test_file of=/dev/null bs=4k count=10000 iflag=direct
+
+#4
+cgcreate -g cpuset:/cpu_set
+cgset -r cpuset.cpus=0 cpu_set
+(cgexec -g cpuset:cpu_set top)&
+taskset -p 1049
+
+#5
+echo '
+#!/bin/bash
+PID=$1
+while true; do
+  usage=$(mpstat 1 1 | awk '/Average:/ {print 100 - $12}')
+  if (( $(echo "$usage < 20" | bc -l) )); then
+    echo "80000 100000" | tee /sys/fs/cgroup/cpu.max
+  elif (( $(echo "$usage > 60" | bc -l) )); then
+    echo "30000 100000" | tee /sys/fs/cgroup/cpu.max
+  fi
+  sleep 5
+done
+' >> task5.sh
+
+#6
+unshare --uts bash -c "hostname isolated-student-72 && exec bash"
+hostname
+"isolated-student-72"
+
+#7
+unshare --pid --fork bash
+mount -t proc proc /proc
+ps aux # Показывает только 2-3 процесса (например, bash, ps).
+ps aux (в другом терминале) # Показывает все процессы хоста.
+
+#8
+unshare --mount bash
+mkdir /tmp/private_$(whoami)
+mount -t tmpfs tmpfs /tmp/private_$(whoami)
+df -h | grep private_$(whoami) 
+df -h | grep private_$(whoami) (в другом терминале)
+
+#9
+unshare --net bash
+ip addr 
+ping google.com
+ping: google.com: Временный сбой в разрешении имен
+
+ping google.com (в другом терминале)
+PING google.com (142.250.187.142) 56(84) bytes of data.
+64 bytes from sof02s45-in-f14.1e100.net (142.250.187.142): icmp_seq=1 ttl=111 time=66.5 ms
+^C
+--- google.com ping statistics ---
+2 packets transmitted, 1 received, 50% packet loss, time 1001ms
+rtt min/avg/max/mdev = 66.509/66.509/66.509/0.000 ms
+
+#10
+#a
+mkdir -p ~/overlay_/{lower,upper,work,merged}
+echo "Оригинальный текст из LOWER" >> ~/overlay_/lower/72_original.txt
+mount -t overlay overlay -o lowerdir=/root/overlay_/lower,upperdir=/root/overlay_/upper,workdir=/root/overlay_/work /root/overlay_/merged
+
+#b
+rm ~/overlay_/merged/72_original.txt
+ls -hl ~/overlay_/upper
+total 0
+c--------- 2 root root 0, 0 Mar 26 20:33 72_original.txt
+rm ~/overlay_/upper/72_original.txt
+
+#c
+echo '
+#!/bin/bash
+UPPER_DIR="$HOME/overlay_upper"
+LOWER_DIR="$HOME/overlay_lower"
+MERGED_DIR="$HOME/overlay_merged"
+LOG_FILE="72_audit.log"
+
+echo "[Whiteout файлы в upper]" > "$LOG_FILE"
+find "$UPPER_DIR" -type f -name '.wh.*' >> "$LOG_FILE"
+
+echo -e "\n[Несоответствия между lower и merged]" >> "$LOG_FILE"
+for file in $(find "$LOWER_DIR" -type f -printf "%P\n"); do
+    merged_file="$MERGED_DIR/$file"
+    lower_file="$LOWER_DIR/$file"
+    if [ -f "$UPPER_DIR/.wh.${file}" ]; then
+        echo "Файл '$file' удален через whiteout" >> "$LOG_FILE"
+    elif [ ! -f "$merged_file" ]; then
+        echo "Файл '$file' отсутствует в merged" >> "$LOG_FILE"
+    else
+        if ! cmp -s "$lower_file" "$merged_file"; then
+            echo "Файл '$file' изменен в merged" >> "$LOG_FILE"
+        fi
+    fi
+done
+' >> 10_c.sh
+
+#d
+При удалении файла в слое merged OverlayFS создает в слое upper специальный whiteout-файл с именем .wh.<имя_файла>
+Этот файл указывает, что соответствующий файл в слое lower должен быть скрыт
+
+
+Нет. Каталог work необходим для атомарных операций и кэширования метаданных
+Без него OverlayFS не сможет корректно работать
+
+
+Слой merged будет полностью соответствовать слою lower
+
+#11
+FROM python:3.9-slim
+
+ENV PYTHONUNBUFFERED=1
+
+RUN useradd -m flaskuser
+
+WORKDIR /app
+
+COPY requirements.txt /app/
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /app/
+
+RUN chown -R flaskuser:flaskuser /app
+
+USER flaskuser
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
+
+
+requirements.txt содержит в себе зависимость flask
+
+.dockerignore
+
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.git
+.gitignore
+a
+
+#12
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    ports:
+      - "2072:80" 
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: vadim_db_pass
+    volumes:
+      - vadim-wp-data:/var/www/html
+    depends_on:
+      - mysql
+    restart: always
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: vadim_db_pass
+      MYSQL_DATABASE: wordpress
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: always
+
+volumes:
+  vadim-wp-data:
+    driver: local
+  mysql-data:
+    driver: local
