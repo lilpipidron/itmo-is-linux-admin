@@ -24,6 +24,13 @@ taskset -p 1049
 echo '
 #!/bin/bash
 PID=$1
+
+GROUP_NAME="dynamic_process_$PID"
+
+cgcreate -g cpu:/$GROUP_NAME
+
+echo $PID >> /sys/fs/cgroup/$GROUP_NAME/cgroup.procs
+
 while true; do
   usage=$(mpstat 1 1 | awk '/Average:/ {print 100 - $12}')
   if (( $(echo "$usage < 20" | bc -l) )); then
