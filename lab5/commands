@@ -10,7 +10,7 @@ cgexec -g memory:memory_limit tail /dev/zero
 
 #3
 cgcreate -g io:/backup_limits
-cgset -r io.max="8:0 riops=1560 wiops=1060" backup_limits
+cgset -r io.max="8:0 riops=1720 wiops=1220" backup_limits
 cgexec -g io:backup_limits dd if=/dev/zero of=/tmp/test_file bs=4k count=10000 oflag=direct
 cgexec -g io:backup_limits dd if=/tmp/test_file of=/dev/null bs=4k count=10000 iflag=direct
 
@@ -123,7 +123,7 @@ FROM python:3.9-slim
 
 ENV PYTHONUNBUFFERED=1
 
-RUN useradd -m flaskuser
+RUN useradd -m user_72
 
 WORKDIR /app
 
@@ -133,9 +133,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
-RUN chown -R flaskuser:flaskuser /app
+RUN chown -R user_72:user_72 /app
 
-USER flaskuser
+USER user_72
 
 EXPOSE 5000
 
