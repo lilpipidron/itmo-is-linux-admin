@@ -1,0 +1,20 @@
+#1
+cat /var/log/Xorg.0.log | grep -i error
+Parse error on line 4 os section Monitor in file /etc/X11/xorg.conf.d/HP_display.conf
+
+#2
+nano /etc/X11/xorg.conf.d/HP_display.conf
+
+#3
+Было
+Section "Monitor"
+  Identifier "Monitor0"
+  VendorName "Amogus"
+  Driver "fbdev"
+EndSection
+
+Стало
+Section "Monitor"
+  Identifier "Monitor0"
+  VendorName "Amogus"
+EndSection
